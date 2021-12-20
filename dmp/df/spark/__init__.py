@@ -535,7 +535,7 @@ class SparkPipeline(Pipeline):
         """
         df = self.df
         cols = df.columns
-        columns = {k.lower(): k.lower() for k in cols}
+        columns = {k.lower(): v.lower() for k, v in columns.items()}
         select = []
         for k in cols:
             l_k = k.lower()
@@ -716,7 +716,8 @@ class SparkPipeline(Pipeline):
                 logger.info("Checking Your DataFrame is empty or not: pass!")
             else:
                 raise DfEmptyException()
-        spark_df = self.cast_cols(spark_df, cast_columns, lowercase_columns)
+        if cast_columns:
+            spark_df = self.cast_cols(spark_df, cast_columns, lowercase_columns)
         writer = spark_df.write
         table = table.strip()
         if transform_columns:
