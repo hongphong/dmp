@@ -535,7 +535,7 @@ class SparkPipeline(Pipeline):
         """
         df = self.df
         cols = df.columns
-        columns = {k.lower(): v.lower() for k, v in columns}
+        columns = {k.lower(): k.lower() for k in cols}
         select = []
         for k in cols:
             l_k = k.lower()
