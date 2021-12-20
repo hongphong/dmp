@@ -7,7 +7,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-__author__ = 'phongphamhong'
+__author__ = "phongphamhong"
 
 import copy
 import os
@@ -89,12 +89,12 @@ class SparkPipeline(Pipeline):
                     spark_conf: overwrite some default configs of spark.
                                 Format: Example:
                                    {
-                                        'spark.jars.packages': 'mysql:mysql-connector-java:5.1.47,org.elasticsearch:elasticsearch-hadoop:6.4.2',
-                                        'spark.dynamicAllocation.enabled': "true",
-                                        'spark.dynamicAllocation.maxExecutors': 5,
-                                        'spark.executor.cores': 4,
-                                        'spark.executor.memory': '2G',
-                                        'spark.shuffle.service.enabled': "true",
+                                        "spark.jars.packages": "mysql:mysql-connector-java:5.1.47,org.elasticsearch:elasticsearch-hadoop:6.4.2",
+                                        "spark.dynamicAllocation.enabled": "true",
+                                        "spark.dynamicAllocation.maxExecutors": 5,
+                                        "spark.executor.cores": 4,
+                                        "spark.executor.memory": "2G",
+                                        "spark.shuffle.service.enabled": "true",
                                         "spark.files.overwrite": "true",
                                         "spark.sql.warehouse.dir": "/apps/spark/warehouse",
                                         "spark.sql.catalogImplementation": "hive",
@@ -124,7 +124,7 @@ class SparkPipeline(Pipeline):
         connection_id = "" if wf_config_connection_id is None else wf_config_connection_id
         try:
             if connection_id:
-                cn = WfConnection.get_wf_connection(connection_id=connection_id)
+                cn = WfConnection(connection_id).get_wf_connection()
                 if cn.extra_dejson:
                     self.__load_config = cn.extra_dejson
                 else:
@@ -194,18 +194,18 @@ class SparkPipeline(Pipeline):
         """
         if not isinstance(SparkPipeline._instance, dict):
             SparkPipeline._instance = {}
-        ins = SparkPipeline._instance.get('_spark_session')
+        ins = SparkPipeline._instance.get("_spark_session")
         if (not ins or not self.is_active):
             # import os global variable
             try:
                 for k, v in self.get_env_vars().items():
-                    logger.info('SET VARIABLE: %s:%s' % (k, v))
+                    logger.info("SET VARIABLE: %s:%s" % (k, v))
                     os.environ[k] = v
             except BaseException as e:
                 logger.info("Cannot import variable spark because:\n%s" % logger.exception(e))
                 pass
 
-            logger.info('[Spark] Create main context ...')
+            logger.info("[Spark] Create main context ...")
 
             if self.__auto_find_pyspark:
                 logger.info("Enabled auto find pyspark...")
@@ -221,19 +221,19 @@ class SparkPipeline(Pipeline):
 
             if def_conf:
                 for c, v in def_conf.items():
-                    logger.info('[Spark] set config: %s: %s' % (c, v))
+                    logger.info("[Spark] set config: %s: %s" % (c, v))
                     conf = conf.set(c, v)
             if self.__enable_hive_support:
                 logger.info("[Spark] enable HiveSupport: true")
-                SparkPipeline._instance['_spark_session'] = ss.config(conf=conf).enableHiveSupport().getOrCreate()
+                SparkPipeline._instance["_spark_session"] = ss.config(conf=conf).enableHiveSupport().getOrCreate()
             else:
-                SparkPipeline._instance['_spark_session'] = ss.config(conf=conf).getOrCreate()
+                SparkPipeline._instance["_spark_session"] = ss.config(conf=conf).getOrCreate()
             py_file = self.get_py_files()
             if py_file:
                 logger.info("[Spark] start add file: %s" % py_file)
                 for f in py_file:
-                    SparkPipeline._instance['_spark_session'].sparkContext.addPyFile(f)
-            return SparkPipeline._instance['_spark_session']
+                    SparkPipeline._instance["_spark_session"].sparkContext.addPyFile(f)
+            return SparkPipeline._instance["_spark_session"]
         return ins
 
     @property
@@ -266,7 +266,7 @@ class SparkPipeline(Pipeline):
         """
         import traceback
         try:
-            spark = SparkPipeline._instance.get('_spark_session')
+            spark = SparkPipeline._instance.get("_spark_session")
             if spark:
                 spark.sparkContext.sparkUser()
                 return True
@@ -308,7 +308,7 @@ class SparkPipeline(Pipeline):
                     "Start query sql by sqlContext\n:-----------------------------\n%s\n-----------------------" % sql)
             df = self.session.sql(sql)
             return self.update_df(df) if inplace else df
-        for k in sql.split(';'):
+        for k in sql.split(";"):
             if k.strip():
                 if log:
                     logger.info("Run query:\n %s" % k)
@@ -320,9 +320,9 @@ class SparkPipeline(Pipeline):
         import traceback
         self = cls()
         try:
-            logger.info('[Spark] Stop sparkSession, SparkHook and clear instances...')
+            logger.info("[Spark] Stop sparkSession, SparkHook and clear instances...")
             # self.session.sc.stop()
-            ins = SparkPipeline._instance.get('_spark_session')
+            ins = SparkPipeline._instance.get("_spark_session")
             if ins:
                 logger.info("Stop spark context of SparkHook...")
                 ins.sparkContext.stop()
@@ -350,7 +350,7 @@ class SparkPipeline(Pipeline):
             log: log info queries or not
             replace_params: replace params on SQL string with specific variables. For example:
                 - sql: select * from example where a > {date_string}
-                - replace_params: {'date_string': '1970-01-01'}
+                - replace_params: {"date_string": "1970-01-01"}
             concat_params: concat params for pandas concat function. Used when extract from multi queries
             spark_options: options for spark when read data from jdbc
         Returns:
@@ -360,9 +360,9 @@ class SparkPipeline(Pipeline):
 
         def connect_sql(table):
             session = self.session
-            table = table.strip().rstrip(';')
-            if table.strip()[:1] != '(':
-                table = '(%s) s' % table
+            table = table.strip().rstrip(";")
+            if table.strip()[:1] != "(":
+                table = "(%s) s" % table
             table = self.replace_template(table, replace_params)
             df_load = (session.read.format("jdbc").option("url",
                                                           config.host)
@@ -455,10 +455,10 @@ class SparkPipeline(Pipeline):
         return self.update_df(df) if inplace else df
 
     def read_csv(self, file_path, options_csv: dict = {}, inplace=False):
-        default_option = {"delimiter": ';',
+        default_option = {"delimiter": ";",
                           "header": True,
                           "encoding": "utf-8",
-                          "escape": '"',
+                          "escape": """,
                           "multiLine": True}
         default_option.update(options_csv)
         df = self.session.read
@@ -642,23 +642,23 @@ class SparkPipeline(Pipeline):
         if to_wf_connection_id.strip() != "":
             config = WfConnection.get_wf_db(to_wf_connection_id if to_wf_connection_id else self.connection_id)
             logger.info(
-                'Insert data to db: %s database/schema: %s, table: %s by Pandas engine' % (
+                "Insert data to db: %s database/schema: %s, table: %s by Pandas engine" % (
                     config.host, table))
         else:
             config = self.db_wf_connection
 
         if mode == SparkPipeline.MODE_TRUNCATE:
             mode = SparkPipeline.MODE_OVERWRITE
-            options['truncate'] = True
+            options["truncate"] = True
 
         db_sql_engine = config.get_sqlalchemy_engine()
 
         if type(sql_before) is str and sql_before.strip() != "":
             sql_before = sql_before.strip().rstrip(";")
-            sql_before = sql_before.split(';\n')
+            sql_before = sql_before.split(";\n")
             logger.info("Execute sql before insert into database")
             for k in sql_before:
-                if k.strip() != '':
+                if k.strip() != "":
                     logger.info("query: %s" % k)
                     db_sql_engine.execute(sql=k, autocommit=True)
         elif callable(sql_before):
@@ -679,10 +679,10 @@ class SparkPipeline(Pipeline):
 
         if type(sql_after) is str and sql_after.strip() != "":
             sql_after = sql_after.strip().rstrip(";")
-            sql_after = sql_after.split(';\n')
+            sql_after = sql_after.split(";\n")
             logger.info("Execute sql after insert into database")
             for k in sql_after:
-                if k.strip() != '':
+                if k.strip() != "":
                     logger.info("query: %s" % k)
                     db_sql_engine.execute(sql=k, autocommit=True)
         elif callable(sql_after):
@@ -735,7 +735,7 @@ class SparkPipeline(Pipeline):
             except pyspark.sql.utils.AnalysisException as e:
                 t = table.split(".")
                 t = t[0] if len(t) == 1 else t[1]
-                if (str(e).find("Table or view '%s' not found" % t) >= 0):
+                if (str(e).find("Table or view "%s" not found" % t) >= 0):
                     mode = self.MODE_OVERWRITE
                     writer = spark_df.write
                 else:
