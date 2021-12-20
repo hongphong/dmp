@@ -690,7 +690,7 @@ class SparkPipeline(Pipeline):
             sql_after(db_sql_engine)
         return True
 
-    def save_to_hive(self, table: str, spark_df: pyspark.sql.DataFrame, mode: str = MODE_APPEND,
+    def save_to_hive(self, table: str, mode: str = MODE_APPEND,
                      format: str = "orc",
                      lowercase_columns: bool = True,
                      options: dict = {},
@@ -701,7 +701,6 @@ class SparkPipeline(Pipeline):
         """
         Insert df to hive table
             :param table: hive table name
-            :param spark_df: spark_dataframe
             :param mode: overwrite or append
             :param format: orc, parquet, csv..
             :param lowercase_columns: lower all columns or not
@@ -710,7 +709,7 @@ class SparkPipeline(Pipeline):
             :param kwargs:
             :return:
         """
-
+        spark_df = self.df
         if empty_error:
             count = spark_df.take(1)
             if count:
