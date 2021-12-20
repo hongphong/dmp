@@ -1,0 +1,8 @@
+pandas
+numpy
+matplotlib
+pyjanitor
+dataframe_sql
+seaborn
+plotly
+pivottablejs

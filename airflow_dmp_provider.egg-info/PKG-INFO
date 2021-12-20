@@ -1,3 +1,15 @@
+Metadata-Version: 2.1
+Name: airflow-dmp-provider
+Version: 0.0.1
+Summary: DMP provider.
+Home-page: phongph16@viettel.com.vn
+Author: phonph16
+Author-email: phongph16@viettel.com.vn
+License: Apache License 2.0
+Platform: UNKNOWN
+Requires-Python: ~=3.6
+Description-Content-Type: text/markdown
+
 <!--
  Licensed to the Apache Software Foundation (ASF) under one
  or more contributor license agreements.  See the NOTICE file
@@ -63,3 +75,5 @@ twine upload packages/* --repository-url http://10.30.154.100:9060
 default account: admin/admin
 pip install -i http://10.30.154.100:9060/simple --trusted-host 10.30.154.100 airflow_dmp_provider
 pip install -i http://10.30.154.100:9060/simple --trusted-host 10.30.154.100 openpyxml
+
+

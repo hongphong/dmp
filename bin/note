@@ -1,0 +1,25 @@
+
+
+# start notebook
+jupyter notebook --ip='*' --NotebookApp.token='' --NotebookApp.password=''
+
+# upload file to twine
+twine upload dist/* --repository-url http://10.30.154.100:9060
+
+
+# enable widget
+pip install jupyter_contrib_nbextensions && jupyter contrib nbextension install --user
+pip install matlab_kernel
+python -m matlab_kernel install --user
+# install lux-api
+pip install lux-api
+jupyter nbextension install --py --user luxwidget
+jupyter nbextension enable --py --user luxwidget
+
+# enable jupyter proxy
+pip install jupyter-server-proxy
+
+# enable grid
+pip install qgrid
+jupyter nbextension enable --py --sys-prefix qgrid
+jupyter nbextension enable --py --sys-prefix widgetsnbextension
