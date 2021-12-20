@@ -38,7 +38,7 @@ class SparkPipeline(Pipeline):
     MODE_APPEND = "append"
     MODE_OVERWRITE = "overwrite"
     MODE_APPEND_PARTITION = "append_partition"
-    MODE_OVERWRITE_PARTITION = "append_overwrite"
+    MODE_OVERWRITE_PARTITION = "overwrite_partition"
     MODE_TRUNCATE = "truncate"
     DEFAULT_BATCH_SIZE = 100000
 
@@ -717,7 +717,7 @@ class SparkPipeline(Pipeline):
                 logger.info("Checking Your DataFrame is empty or not: pass!")
             else:
                 raise DfEmptyException()
-        spark_df = self.cast_columns(spark_df, cast_columns, lowercase_columns)
+        spark_df = self.cast_cols(spark_df, cast_columns, lowercase_columns)
         writer = spark_df.write
         table = table.strip()
         if transform_columns:
