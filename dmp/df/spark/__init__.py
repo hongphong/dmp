@@ -458,7 +458,7 @@ class SparkPipeline(Pipeline):
         default_option = {"delimiter": ";",
                           "header": True,
                           "encoding": "utf-8",
-                          "escape": """,
+                          "escape": "",
                           "multiLine": True}
         default_option.update(options_csv)
         df = self.session.read
@@ -735,7 +735,7 @@ class SparkPipeline(Pipeline):
             except pyspark.sql.utils.AnalysisException as e:
                 t = table.split(".")
                 t = t[0] if len(t) == 1 else t[1]
-                if (str(e).find("Table or view "%s" not found" % t) >= 0):
+                if (str(e).find("Table or view [%s] not found" % t) >= 0):
                     mode = self.MODE_OVERWRITE
                     writer = spark_df.write
                 else:
