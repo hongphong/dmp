@@ -10,6 +10,7 @@
 __author__ = "phongphamhong"
 
 import copy
+import logging
 import os
 
 import pyspark
@@ -729,9 +730,6 @@ class SparkPipeline(Pipeline):
                 cols = [k[0] for k in SparkPipeline().run_sql("show columns in %s" % table, log=False).collect()]
                 logger.info("Columns will be inserted: %s" % cols)
                 writer = spark_df.select(*cols).write
-                if isinstance(options, dict) and options:
-                    for k, v in options.items():
-                        writer = writer.option(k, v)
             except pyspark.sql.utils.AnalysisException as e:
                 t = table.split(".")
                 t = t[0] if len(t) == 1 else t[1]
@@ -740,7 +738,10 @@ class SparkPipeline(Pipeline):
                     writer = spark_df.write
                 else:
                     raise pyspark.sql.utils.AnalysisException(e, e)
-
+        logger.info("Save data with options: %s" % options)
+        if isinstance(options, dict) and options:
+            for k, v in options.items():
+                writer = writer.option(k, v)
         if mode in [self.MODE_APPEND_PARTITION,
                     self.MODE_OVERWRITE_PARTITION
                     ]:
