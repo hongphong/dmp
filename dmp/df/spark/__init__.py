@@ -692,7 +692,7 @@ class SparkPipeline(Pipeline):
         return True
 
     def save_to_hive(self, table: str, mode: str = MODE_APPEND,
-                     format: str = "orc",
+                     format: str = "parquet",
                      lowercase_columns: bool = True,
                      options: dict = {},
                      cast_columns: dict = {},
