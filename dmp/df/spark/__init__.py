@@ -738,10 +738,7 @@ class SparkPipeline(Pipeline):
                     writer = spark_df.write
                 else:
                     raise pyspark.sql.utils.AnalysisException(e, e)
-        logger.info("Save data with options: %s" % options)
-        if isinstance(options, dict) and options:
-            for k, v in options.items():
-                writer = writer.option(k, v)
+
         if mode in [self.MODE_APPEND_PARTITION,
                     self.MODE_OVERWRITE_PARTITION
                     ]:
@@ -755,11 +752,22 @@ class SparkPipeline(Pipeline):
                 if conf.get(k) != v:
                     raise SystemError("You must config SparkConf with %s=%s" % (k, v))
             logger.info("Start insert hive table with mode partition: {%s} - {%s}" % (mode, table))
-            writer.format(format).insertInto(table, overwrite=mode == self.MODE_OVERWRITE_PARTITION)
+            writer.format(format)
+            if isinstance(options, dict) and options:
+                logger.info("Save data with options:")
+                for k, v in options.items():
+                    logger.info("%s: %s" % (k, v))
+                    writer = writer.option(k, v)
+            writer.insertInto(table, overwrite=mode == self.MODE_OVERWRITE_PARTITION)
             logger.info("Insert hive table with mode partition: {%s} - {%s} done!" % (mode, table))
         elif mode in [self.MODE_OVERWRITE, self.MODE_APPEND]:
             writer = writer.mode(mode).format(format)
             logger.info("Start insert hive table by spark - table:{%s} {%s}" % (mode, table))
+            if isinstance(options, dict) and options:
+                logger.info("Save data with options:")
+                for k, v in options.items():
+                    logger.info("%s: %s" % (k,v))
+                    writer = writer.option(k, v)
             writer.saveAsTable(table, partitionBy=partition_by)
             logger.info("Insert hive table: table:{%s} {%s} done!" % (mode, table))
         else:
