@@ -9,8 +9,11 @@ dmp/__init__.py
 dmp/df/__init__.py
 dmp/df/base.py
 dmp/df/exceptions.py
-dmp/df/pandas.py
-dmp/df/spark.py
+dmp/df/pandas/__init__.py
+dmp/df/pandas/mongodb/__init__.py
+dmp/df/pandas/oracle/__init__.py
+dmp/df/pandas/sql/__init__.py
+dmp/df/spark/__init__.py
 dmp/helper/__init__.py
 dmp/helper/connection.py
 dmp/helper/dag.py
@@ -36,5 +39,6 @@ dmp/wf/operators/__init__.py
 dmp/wf/operators/etl_operator.py
 dmp/wf/operators/trigger_dag_operator.py
 tests/__init__.py
+tests/sync_mongodb.py
 tests/test_pandas.py
 tests/test_spark.py

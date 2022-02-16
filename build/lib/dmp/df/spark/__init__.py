@@ -608,19 +608,6 @@ class SparkPipeline(Pipeline):
     def show(self, **kwargs):
         return self.df.show(**kwargs)
 
-    def check_table_exists(self, table):
-        table = table.strip()
-        database = 'default'
-        spl = table.split('.')
-        if len(spl) > 1:
-            database = spl[0]
-            table = spl[1]
-        check_exists = self.run_sql("show tables in %s" % database).where('tableName = "%s"' % table).take(1)
-        if check_exists:
-            logger.info("Table %s exists!" % table)
-            return True
-        return False
-
     def save_to_db_sql(self, table: str,
                        to_wf_connection_id: str = "",
                        mode: str = MODE_APPEND,
@@ -705,15 +692,13 @@ class SparkPipeline(Pipeline):
         return True
 
     def save_to_hive(self, table: str, mode: str = MODE_APPEND,
-                     format: str = "parquet",
+                     format: str = "orc",
                      lowercase_columns: bool = True,
                      options: dict = {},
                      cast_columns: dict = {},
                      transform_columns: dict = {},
                      partition_by: list = [],
-                     empty_error: bool = False,
-                     mode_strict=True
-                     ) -> bool:
+                     empty_error: bool = False, ) -> bool:
         """
         Insert df to hive table
             :param table: hive table name
@@ -722,8 +707,6 @@ class SparkPipeline(Pipeline):
             :param lowercase_columns: lower all columns or not
             :param options: options for spark writer
             :param partition_by: list fields will be used to partition
-            :param empty_error: raise Error if dataframe is empty
-            :param mode_strict: To make sure that users/devs want to write overwrite table, default: True
             :param kwargs:
             :return:
         """
@@ -748,11 +731,17 @@ class SparkPipeline(Pipeline):
                 logger.info("Columns will be inserted: %s" % cols)
                 writer = spark_df.select(*cols).write
             except pyspark.sql.utils.AnalysisException as e:
-                pass
-            if not self.check_table_exists(table):
-                mode = self.MODE_OVERWRITE
-                writer = spark_df.write
-
+                t = table.split(".")
+                t = t[0] if len(t) == 1 else t[1]
+                if (str(e).find("Table or view [%s] not found" % t) >= 0):
+                    mode = self.MODE_OVERWRITE
+                    writer = spark_df.write
+                else:
+                    raise pyspark.sql.utils.AnalysisException(e, e)
+        logger.info("Save data with options: %s" % options)
+        if isinstance(options, dict) and options:
+            for k, v in options.items():
+                writer = writer.option(k, v)
         if mode in [self.MODE_APPEND_PARTITION,
                     self.MODE_OVERWRITE_PARTITION
                     ]:
@@ -766,28 +755,11 @@ class SparkPipeline(Pipeline):
                 if conf.get(k) != v:
                     raise SystemError("You must config SparkConf with %s=%s" % (k, v))
             logger.info("Start insert hive table with mode partition: {%s} - {%s}" % (mode, table))
-            writer.format(format)
-            if isinstance(options, dict) and options:
-                logger.info("Save data with options:")
-                for k, v in options.items():
-                    logger.info("%s: %s" % (k, v))
-                    writer = writer.option(k, v)
-            writer.insertInto(table, overwrite=mode == self.MODE_OVERWRITE_PARTITION)
+            writer.format(format).insertInto(table, overwrite=mode == self.MODE_OVERWRITE_PARTITION)
             logger.info("Insert hive table with mode partition: {%s} - {%s} done!" % (mode, table))
         elif mode in [self.MODE_OVERWRITE, self.MODE_APPEND]:
-            if (mode == self.MODE_OVERWRITE and mode_strict and self.check_table_exists(table)):
-                raise ValueError(
-                    """
-                    Mode: %s is not allowed because mode_strict is turn on and table [%s] was existed. 
-                    You must drop this table before insert""" % (mode, table))
-
             writer = writer.mode(mode).format(format)
             logger.info("Start insert hive table by spark - table:{%s} {%s}" % (mode, table))
-            if isinstance(options, dict) and options:
-                logger.info("Save data with options:")
-                for k, v in options.items():
-                    logger.info("%s: %s" % (k, v))
-                    writer = writer.option(k, v)
             writer.saveAsTable(table, partitionBy=partition_by)
             logger.info("Insert hive table: table:{%s} {%s} done!" % (mode, table))
         else:

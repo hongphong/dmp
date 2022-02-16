@@ -26,4 +26,4 @@ def get_conf(selection, key, default='', d_type=''):
 class Setting:
     UPLOAD_FILE_TEMP = '/tmp/airflow_upload'
     SPARK_CONFIG_DEFAULT = 'spark_default_config'
-    LOCAL_TIME_ZONE = 'asia/bangkok'
+    LOCAL_TIME_ZONE = 'UTC'
