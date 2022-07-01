@@ -830,10 +830,11 @@ class SparkPipeline(Pipeline):
             Read data from clickhouse base on connection define in Airflow (Extra Json Field)
         """
         cn = WfConnection(wf_connection_id).get_wf_connection()
-        if not cn.extra_dejson:
+        cf = cn.extra_dejson.get('jdbc_conf', {})
+        if not cf:
             raise ValueError('You need to define connection in Airflow')
         reader = self.session.read.format("jdbc")
-        cf = cn.extra_dejson
+
         cf.update(options)
         cf['dbtable'] = table
         for k, v in cn.extra_dejson.items():
@@ -846,11 +847,11 @@ class SparkPipeline(Pipeline):
             Write data to clickhouse base on connection define in Airflow (Extra Json Field)
         """
         cn = WfConnection(wf_connection_id).get_wf_connection()
-        if not cn.extra_dejson or not cn.extra_dejson.get('url'):
+        cf = cn.extra_dejson.get('jdbc_conf', {})
+        if not cf or not cf.get('url'):
             raise ValueError('You need to define connection in Airflow')
         logger.info(f'Start write data with mode: {mode} and table: {table}')
         writer = df.write.mode(mode)
-        cf = cn.extra_dejson
         cf.update(options)
         jdbc = options.get('url', '')
         for k, v in cn.extra_dejson.items():
