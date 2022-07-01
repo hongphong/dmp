@@ -9,6 +9,7 @@
 # limitations under the License.
 __author__ = "phongphamhong"
 
+from cmath import log
 import copy
 import logging
 import os
@@ -793,3 +794,66 @@ class SparkPipeline(Pipeline):
         else:
             raise ValueError("mode: %s is invalid" % mode)
         return True
+
+    def drop_hive_table(self, table: str, deep_clean: bool = False):
+        self.run_sql(f'DROP TABLE {table}')
+        conf = self.session.sparkContext.getConf()
+        if deep_clean:
+            warehouse_path: str = conf.get("spark.sql.warehouse.dir")
+            if not warehouse_path:
+                raise ValueError('Missing config: spark.sql.warehouse.dir in SparkConf')
+            from subprocess import Popen, PIPE
+            table_spl = table.split('.')
+            if len(table_spl) > 1:
+                table_path = f'{table_spl[0]}.db/{table_spl[1]}'
+            else:
+                table_path = f'default.db/{table_spl[1]}'
+            path = f'{warehouse_path}/{table_path}'
+            try:
+                self.run_cmd(cmd=f"hdfs dfs -rm -r {path}")
+            except BaseException as erro:
+                if erro.find('No such file or directory') >= 0:
+                    return True
+                elif erro != '':
+                    raise ValueError(f'Error when remove path on HDFS: {erro}')
+        return True
+
+    def run_cmd(self, cmd):
+        from subprocess import Popen, PIPE
+        logger.info(f"Start run cmd: {cmd}")
+        process = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
+        std_out, std_err = process.communicate()
+        return std_out, std_err
+
+    def read_clickhouse(self, table, wf_connection_id='clickhouse_default', options={}):
+        """
+            Read data from clickhouse base on connection define in Airflow (Extra Json Field)
+        """
+        cn = WfConnection(wf_connection_id).get_wf_connection()
+        if not cn.extra_dejson:
+            raise ValueError('You need to define connection in Airflow')
+        reader = self.session.read.format("jdbc")
+        cf = cn.extra_dejson
+        cf.update(options)
+        cf['dbtable'] = table
+        for k, v in cn.extra_dejson.items():
+            logger.info(f"set option {k}:{v if k != 'password' else '********'}")
+            reader = reader.option(k, v)
+        return reader.load()
+
+    def save_to_clickhouse(self, df, table, mode=MODE_APPEND, wf_connection_id='clickhouse_default', options={}):
+        """
+            Write data to clickhouse base on connection define in Airflow (Extra Json Field)
+        """
+        cn = WfConnection(wf_connection_id).get_wf_connection()
+        if not cn.extra_dejson or not cn.extra_dejson.get('url'):
+            raise ValueError('You need to define connection in Airflow')
+        logger.info(f'Start write data with mode: {mode} and table: {table}')
+        writer = df.write.mode(mode)
+        cf = cn.extra_dejson
+        cf.update(options)
+        jdbc = options.get('url', '')
+        for k, v in cn.extra_dejson.items():
+            logger.info(f"set option {k}:{v if k != 'password' else '********'}")
+            writer = writer.option(k, v)
+        return writer.jdbc(jdbc, table)
