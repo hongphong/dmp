@@ -36,6 +36,7 @@ class SparkPipeline(Pipeline):
     __auto_find_pyspark = False
     __load_config = {}
     __enable_hive_support = True
+    __wf_connection_id = ''
 
     MODE_APPEND = "append"
     MODE_OVERWRITE = "overwrite"
@@ -131,6 +132,7 @@ class SparkPipeline(Pipeline):
                     self.__load_config = cn.extra_dejson
                 else:
                     logger.warn("Config for sparkContext of SparkHook is not set. Using default config")
+            self.__wf_connection_id = connection_id
 
         except BaseException as e:
             logger.warn("Connection SparkHook is not set. Using default config")
@@ -825,10 +827,12 @@ class SparkPipeline(Pipeline):
         std_out, std_err = process.communicate()
         return std_out, std_err
 
-    def read_clickhouse(self, table, wf_connection_id='clickhouse_default', options={}):
+    def read_clickhouse(self, table, wf_connection_id='', options={}):
         """
             Read data from clickhouse base on connection define in Airflow (Extra Json Field)
         """
+        if  not wf_connection_id:
+            wf_connection_id = self.__wf_connection_id
         cn = WfConnection(wf_connection_id).get_wf_connection()
         cf = cn.extra_dejson.get('jdbc_conf', {})
         if not cf:
@@ -838,14 +842,17 @@ class SparkPipeline(Pipeline):
         cf.update(options)
         cf['dbtable'] = table
         for k, v in cn.extra_dejson.items():
-            logger.info(f"set option {k}:{v if k != 'password' else '********'}")
+            logger.info(f"set option clickhouse: {k}:{v if k != 'password' else '********'}")
             reader = reader.option(k, v)
         return reader.load()
 
-    def save_to_clickhouse(self, df, table, mode=MODE_APPEND, wf_connection_id='clickhouse_default', options={}):
+    def save_to_clickhouse(self, df, table, mode=MODE_APPEND, wf_connection_id='', options={}):
         """
             Write data to clickhouse base on connection define in Airflow (Extra Json Field)
         """
+        if  not wf_connection_id:
+            wf_connection_id = self.__wf_connection_id
+
         cn = WfConnection(wf_connection_id).get_wf_connection()
         cf = cn.extra_dejson.get('jdbc_conf', {})
         if not cf or not cf.get('url'):
@@ -855,6 +862,6 @@ class SparkPipeline(Pipeline):
         cf.update(options)
         jdbc = options.get('url', '')
         for k, v in cn.extra_dejson.items():
-            logger.info(f"set option {k}:{v if k != 'password' else '********'}")
+            logger.info(f"set option clickhouse: {k}:{v if k != 'password' else '********'}")
             writer = writer.option(k, v)
         return writer.jdbc(jdbc, table)
