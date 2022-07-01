@@ -841,7 +841,7 @@ class SparkPipeline(Pipeline):
 
         cf.update(options)
         cf['dbtable'] = table
-        for k, v in cn.extra_dejson.items():
+        for k, v in cf.items():
             logger.info(f"set option clickhouse: {k}:{v if k != 'password' else '********'}")
             reader = reader.option(k, v)
         return reader.load()
@@ -861,7 +861,7 @@ class SparkPipeline(Pipeline):
         writer = df.write.mode(mode)
         cf.update(options)
         jdbc = options.get('url', '')
-        for k, v in cn.extra_dejson.items():
+        for k, v in cf.items():
             logger.info(f"set option clickhouse: {k}:{v if k != 'password' else '********'}")
             writer = writer.option(k, v)
         return writer.jdbc(jdbc, table)
