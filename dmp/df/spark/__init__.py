@@ -860,7 +860,7 @@ class SparkPipeline(Pipeline):
         logger.info(f'Start write data with mode: {mode} and table: {table}')
         writer = df.write.mode(mode)
         cf.update(options)
-        jdbc = options.get('url', '')
+        jdbc = cf.get('url', '')
         for k, v in cf.items():
             logger.info(f"set option clickhouse: {k}:{v if k != 'password' else '********'}")
             writer = writer.option(k, v)
