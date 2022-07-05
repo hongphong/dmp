@@ -33,8 +33,9 @@ def load_factory(connect_type, connection_id, object_class=None):
         from dmp.wf.hooks.oracle_hook import CusOracleHook
         object_class = CusOracleHook
     elif 'clickhouse' in connect_type:
-        # TODO: need to implement this option
-        raise NotImplemented()
+        from dmp.wf.hooks.clickhouse_hook import CusClickhouseHook
+        object_class = CusClickhouseHook
+
     if object_class:
         return object_class(connection_id)
     else:
