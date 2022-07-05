@@ -33,9 +33,8 @@ def load_factory(connect_type, connection_id, object_class=None):
         from dmp.wf.hooks.oracle_hook import CusOracleHook
         object_class = CusOracleHook
     elif 'clickhouse' in connect_type:
-        from dmp.wf.hooks.clickhouse_hook import CusClickhouseHook
-        object_class = CusClickhouseHook
-
+        from apache.airflow.providers.clickhouse.hooks.ClickhouseHook import ClickhouseHook
+        object_class = ClickhouseHook
     if object_class:
         return object_class(connection_id)
     else:
