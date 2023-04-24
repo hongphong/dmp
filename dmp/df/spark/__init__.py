@@ -368,14 +368,13 @@ class SparkPipeline(Pipeline):
             if table.strip()[:1] != "(":
                 table = "(%s) s" % table
             table = self.replace_template(table, replace_params)
-            df_load = (session.read.format("jdbc").option("url",
-                                                          config.host)
+            df_load = (session.read.format("jdbc").option("url",(config.extra_dejson.get('jdbc_conf',{}).get('url','') if config.extra_dejson.get('jdbc_conf',{}).get('url','') else config.host))
                        .option("dbtable", table))
             if config.login:
                 df_load = df_load.option("user", config.login)
             if config.password:
                 df_load = df_load.option("password", config.password)
-            df_load = df_load.option("driver", config.extra_dejson.get("extra__jdbc__drv_clsname")) \
+            df_load = df_load.option("driver", (config.extra_dejson.get('jdbc_conf',{}).get('driver','') if config.extra_dejson.get('jdbc_conf',{}).get('driver','') else config.extra_dejson.get("extra__jdbc__drv_clsname"))) \
                 .option("isolationLevel", "READ_UNCOMMITTED")
             if isinstance(spark_options, dict) and spark_options:
                 for k, v in spark_options.items():
