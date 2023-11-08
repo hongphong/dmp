@@ -54,12 +54,3 @@ You can install this package on top of an existing airflow 2.* installation via
 | PIP package         | Version required   |
 |:--------------------|:-------------------|
 | airflow   | >=10.1            |
-
-
-## VTCC REPO HOST:
-build wheel: python setup.py bdist_wheel
-repo host: http://10.30.154.100:9060
-twine upload packages/* --repository-url http://10.30.154.100:9060
-default account: admin/admin
-pip install -i http://10.30.154.100:9060/simple --trusted-host 10.30.154.100 airflow_dmp_provider
-pip install -i http://10.30.154.100:9060/simple --trusted-host 10.30.154.100 openpyxml
